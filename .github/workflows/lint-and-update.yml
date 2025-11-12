@@ -9,6 +9,10 @@ on:
       - 'validate-and-update.sh'
       - '.github/workflows/lint-and-update.yml'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -17,7 +21,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Make script executable
         run: chmod +x validate-and-update.sh
@@ -37,7 +43,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add _index.cfg
           git commit -m "chore: auto-update _index.cfg [skip ci]"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
