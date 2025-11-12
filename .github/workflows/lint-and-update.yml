@@ -7,6 +7,7 @@ on:
       - 'file_*.cfg'
       - '_index.cfg'
       - 'validate-and-update.sh'
+      - 'validate-urls.sh'
       - '.github/workflows/lint-and-update.yml'
 
 permissions:
@@ -29,7 +30,13 @@ jobs:
         run: chmod +x validate-and-update.sh
       
       - name: Run validation and update script
-        run: ./validate-and-update.sh
+        run: ./validate-and-update.sh --changed-only
+      
+      - name: Make URL validation script executable
+        run: chmod +x validate-urls.sh
+      
+      - name: Run URL validation on changed files
+        run: ./validate-urls.sh
       
       - name: Check for changes
         id: git-check
