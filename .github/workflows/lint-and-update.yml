@@ -17,6 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       
       - name: Make script executable
@@ -37,7 +38,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add _index.cfg
           git commit -m "chore: auto-update _index.cfg [skip ci]"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
