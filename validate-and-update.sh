@@ -8,7 +8,45 @@ echo "=== Starting validation and update process ==="
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Check if we should only validate changed files
+VALIDATE_MODE="all"
+if [ ! -z "$1" ] && [ "$1" == "--changed-only" ]; then
+    VALIDATE_MODE="changed"
+fi
+
+# Function to get changed file_*.cfg files compared to master/main
+get_changed_files() {
+    # Determine the default branch (master or main)
+    local default_branch=""
+    if git rev-parse --verify origin/main >/dev/null 2>&1; then
+        default_branch="origin/main"
+    elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+        default_branch="origin/master"
+    else
+        echo -e "${YELLOW}WARNING: Could not find origin/main or origin/master. Validating all files.${NC}" >&2
+        echo ""
+        return
+    fi
+    
+    echo -e "${BLUE}Comparing with $default_branch...${NC}" >&2
+    
+    # Get changed/added file_*.cfg files
+    local changed_files=$(git diff --name-only $default_branch...HEAD | grep '^file_.*\.cfg$' || true)
+    
+    if [ -z "$changed_files" ]; then
+        echo -e "${BLUE}No file_*.cfg files changed in this branch${NC}" >&2
+    else
+        echo -e "${BLUE}Changed files:${NC}" >&2
+        echo "$changed_files" | while read -r file; do
+            echo -e "${BLUE}  - $file${NC}" >&2
+        done
+    fi
+    
+    echo "$changed_files"
+}
 
 # Function to validate a single .cfg file
 validate_cfg_file() {
@@ -121,31 +159,58 @@ validate_cfg_file() {
 
 # Find all file_*.cfg files
 echo ""
-echo "=== Step 1: Validating all file_*.cfg files ==="
-FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
+echo "=== Step 1: Validating file_*.cfg files ==="
 
-if [ ${#FILES[@]} -eq 0 ]; then
-    echo -e "${RED}ERROR: No file_*.cfg files found${NC}" >&2
-    exit 1
+if [ "$VALIDATE_MODE" == "changed" ]; then
+    CHANGED_FILES=$(get_changed_files)
+    if [ -z "$CHANGED_FILES" ]; then
+        echo -e "${GREEN}No changed files to validate. Skipping validation step.${NC}" >&2
+        # Still need to count all files for index update
+        FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
+    else
+        FILES=($CHANGED_FILES)
+        echo -e "${BLUE}Validating only changed files...${NC}" >&2
+    fi
+else
+    FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
+    echo -e "${BLUE}Validating all files...${NC}" >&2
 fi
 
-# Validate each file and count total links
-TOTAL_LINKS=0
-declare -A FILE_LINK_COUNTS
-
-for file in "${FILES[@]}"; do
-    link_count=$(validate_cfg_file "$file")
-    FILE_LINK_COUNTS[$file]=$link_count
-    TOTAL_LINKS=$((TOTAL_LINKS + link_count))
-done
+if [ ${#FILES[@]} -eq 0 ]; then
+    echo -e "${YELLOW}No files to validate${NC}" >&2
+    # Count all files for the index
+    ALL_FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
+    if [ ${#ALL_FILES[@]} -eq 0 ]; then
+        echo -e "${RED}ERROR: No file_*.cfg files found${NC}" >&2
+        exit 1
+    fi
+else
+    # Validate each file
+    for file in "${FILES[@]}"; do
+        link_count=$(validate_cfg_file "$file")
+    done
+fi
 
 echo ""
 echo "=== Step 2: Updating _index.cfg ==="
 
+# Always count ALL files for the index, not just changed ones
+ALL_FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
+TOTAL_LINKS=0
+
+echo "Counting links across all files..." >&2
+for file in "${ALL_FILES[@]}"; do
+    # Count links in each file
+    file_link_count=$(grep -c '^\[link_[0-9]*\]' "$file" || echo "0")
+    TOTAL_LINKS=$((TOTAL_LINKS + file_link_count))
+    echo "  $file: $file_link_count links" >&2
+done
+
 # Count file_*.cfg files
-FILE_COUNT=${#FILES[@]}
-echo "Total files: $FILE_COUNT"
-echo "Total links: $TOTAL_LINKS"
+FILE_COUNT=${#ALL_FILES[@]}
+echo "" >&2
+echo "Total files: $FILE_COUNT" >&2
+echo "Total links: $TOTAL_LINKS" >&2
 
 # Update _index.cfg
 cat > _index.cfg << EOF

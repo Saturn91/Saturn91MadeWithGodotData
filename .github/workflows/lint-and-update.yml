@@ -29,7 +29,7 @@ jobs:
         run: chmod +x validate-and-update.sh
       
       - name: Run validation and update script
-        run: ./validate-and-update.sh
+        run: ./validate-and-update.sh --changed-only
       
       - name: Check for changes
         id: git-check
