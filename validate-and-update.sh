@@ -111,6 +111,7 @@ validate_cfg_file() {
     # Check if file has more than 100 links
     if [ "$link_num" -gt 100 ]; then
         echo -e "${RED}ERROR in $file: Contains $link_num links (max 100 allowed)${NC}" >&2
+        echo -e "${RED}ERROR Please add a new file: file_*.cfg put the new link(s) there.${NC}" >&2
         exit 1
     fi
     
