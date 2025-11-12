@@ -132,24 +132,27 @@ validate_cfg_file() {
         
         # Check each line matches exactly one of the 4 allowed patterns
         # Field name must be exactly: url, developer, dev_link, or preview_image
-        # Format must be: fieldname=value (no spaces around =)
+        # Format must be: fieldname="value" (value wrapped in double quotes)
         local has_url=0
         local has_developer=0
         local has_dev_link=0
         local has_preview_image=0
         
         while IFS= read -r line; do
-            if [[ "$line" =~ ^url= ]]; then
+            # Check if value is wrapped in double quotes
+            if [[ "$line" =~ ^url=\".*\"$ ]]; then
                 ((has_url++))
-            elif [[ "$line" =~ ^developer= ]]; then
+            elif [[ "$line" =~ ^developer=\".*\"$ ]]; then
                 ((has_developer++))
-            elif [[ "$line" =~ ^dev_link= ]]; then
+            elif [[ "$line" =~ ^dev_link=\".*\"$ ]]; then
                 ((has_dev_link++))
-            elif [[ "$line" =~ ^preview_image= ]]; then
+            elif [[ "$line" =~ ^preview_image=\".*\"$ ]]; then
                 ((has_preview_image++))
             else
                 if [ -z "$line" ]; then
                     echo -e "${RED}ERROR in $file [$section]: Empty line not allowed${NC}" >&2
+                elif [[ "$line" =~ ^(url|developer|dev_link|preview_image)= ]]; then
+                    echo -e "${RED}ERROR in $file [$section]: Value must be wrapped in double quotes: '$line'${NC}" >&2
                 else
                     echo -e "${RED}ERROR in $file [$section]: Invalid line: '$line'${NC}" >&2
                 fi
