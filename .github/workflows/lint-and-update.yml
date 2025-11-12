@@ -1,0 +1,45 @@
+name: Lint and Update CFG Files
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'file_*.cfg'
+      - '_index.cfg'
+      - 'validate-and-update.sh'
+      - '.github/workflows/lint-and-update.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Make script executable
+        run: chmod +x validate-and-update.sh
+      
+      - name: Run validation and update script
+        run: ./validate-and-update.sh
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code _index.cfg || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changed
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add _index.cfg
+          git commit -m "chore: auto-update _index.cfg [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Success message
+        run: echo "✅ All .cfg files validated successfully!"
