@@ -10,8 +10,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-ERRORS=0
-
 # Function to validate a single .cfg file
 validate_cfg_file() {
     local file=$1
@@ -20,8 +18,7 @@ validate_cfg_file() {
     # Check if file exists
     if [ ! -f "$file" ]; then
         echo -e "${RED}ERROR: File $file does not exist${NC}" >&2
-        ((ERRORS++))
-        return 1
+        exit 1
     fi
     
     # Parse the file and validate each section
@@ -32,7 +29,7 @@ validate_cfg_file() {
         # Check naming format (link_n)
         if ! [[ "$section" =~ ^link_[0-9]+$ ]]; then
             echo -e "${RED}ERROR in $file: Invalid section name '$section' (should be link_N)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
         
         # Extract section number and verify it matches expected sequence
@@ -60,7 +57,7 @@ validate_cfg_file() {
         # Check if there are exactly 4 lines and they are all valid fields
         if [ "$total_lines" -ne 4 ]; then
             echo -e "${RED}ERROR in $file [$section]: Section must contain exactly 4 lines (found $total_lines)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
         
         # Check each line matches exactly one of the 4 allowed patterns
@@ -70,7 +67,6 @@ validate_cfg_file() {
         local has_developer=0
         local has_dev_link=0
         local has_preview_image=0
-        local line_errors=0
         
         while IFS= read -r line; do
             if [[ "$line" =~ ^url= ]]; then
@@ -87,29 +83,27 @@ validate_cfg_file() {
                 else
                     echo -e "${RED}ERROR in $file [$section]: Invalid line: '$line'${NC}" >&2
                 fi
-                ((line_errors++))
+                exit 1
             fi
         done <<< "$section_content"
         
         # Check all 4 required fields are present exactly once
         if [ "$has_url" -ne 1 ]; then
             echo -e "${RED}ERROR in $file [$section]: Must have exactly 1 'url' field (found $has_url)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
         if [ "$has_developer" -ne 1 ]; then
             echo -e "${RED}ERROR in $file [$section]: Must have exactly 1 'developer' field (found $has_developer)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
         if [ "$has_dev_link" -ne 1 ]; then
             echo -e "${RED}ERROR in $file [$section]: Must have exactly 1 'dev_link' field (found $has_dev_link)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
         if [ "$has_preview_image" -ne 1 ]; then
             echo -e "${RED}ERROR in $file [$section]: Must have exactly 1 'preview_image' field (found $has_preview_image)${NC}" >&2
-            ((ERRORS++))
+            exit 1
         fi
-        
-        ERRORS=$((ERRORS + line_errors))
         
         ((link_num++))
     done
@@ -117,7 +111,7 @@ validate_cfg_file() {
     # Check if file has more than 100 links
     if [ "$link_num" -gt 100 ]; then
         echo -e "${RED}ERROR in $file: Contains $link_num links (max 100 allowed)${NC}" >&2
-        ((ERRORS++))
+        exit 1
     fi
     
     echo -e "${GREEN}✓ $file validated ($link_num links)${NC}" >&2
@@ -130,7 +124,7 @@ echo "=== Step 1: Validating all file_*.cfg files ==="
 FILES=($(ls file_*.cfg 2>/dev/null | sort -V))
 
 if [ ${#FILES[@]} -eq 0 ]; then
-    echo -e "${RED}ERROR: No file_*.cfg files found${NC}"
+    echo -e "${RED}ERROR: No file_*.cfg files found${NC}" >&2
     exit 1
 fi
 
@@ -143,13 +137,6 @@ for file in "${FILES[@]}"; do
     FILE_LINK_COUNTS[$file]=$link_count
     TOTAL_LINKS=$((TOTAL_LINKS + link_count))
 done
-
-# Check for validation errors
-if [ $ERRORS -gt 0 ]; then
-    echo ""
-    echo -e "${RED}=== Validation failed with $ERRORS error(s) ===${NC}"
-    exit 1
-fi
 
 echo ""
 echo "=== Step 2: Updating _index.cfg ==="
@@ -170,8 +157,8 @@ EOF
 echo -e "${GREEN}✓ _index.cfg updated${NC}"
 
 echo ""
-echo -e "${GREEN}=== Validation and update completed successfully ===${NC}"
-echo "Summary:"
-echo "  - Files validated: $FILE_COUNT"
-echo "  - Total links: $TOTAL_LINKS"
-echo "  - Errors: 0"
+echo -e "${GREEN}=== Validation and update completed successfully ===${NC}" >&2
+echo "Summary:" >&2
+echo "  - Files validated: $FILE_COUNT" >&2
+echo "  - Total links: $TOTAL_LINKS" >&2
+echo "  - Errors: 0" >&2
