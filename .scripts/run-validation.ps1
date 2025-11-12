@@ -4,7 +4,7 @@
 $bashPath = "C:\Program Files\Git\bin\bash.exe"
 
 if (Test-Path $bashPath) {
-    & $bashPath -c "./validate-and-update.sh"
+    & $bashPath -c "./.scripts/validate-and-update.sh"
     exit $LASTEXITCODE
 } else {
     Write-Host "Git Bash not found at $bashPath" -ForegroundColor Red

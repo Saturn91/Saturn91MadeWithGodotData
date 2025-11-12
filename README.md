@@ -6,10 +6,11 @@ This repository serves as a data source for a Godot widget that randomly promote
 
 - `file_*.cfg` - Data files containing game information (up to 100 games per file)
 - `_index.cfg` - Auto-generated index file tracking total files and games (DO NOT EDIT MANUALLY)
-- `validate-and-update.sh` - Validation script for `.cfg` file format and automatic index updates
-- `validate-urls.sh` - URL validation script that checks all URLs return HTTP 200 and images are valid
-- `run-validation.ps1` - PowerShell wrapper for validation (Windows)
-- `run-url-validation.ps1` - PowerShell wrapper for URL validation (Windows)
+- `.scripts/` - Validation scripts folder
+  - `validate-and-update.sh` - Format validation and automatic index updates
+  - `validate-urls.sh` - URL validation (HTTP 200 + image content type checks)
+  - `run-validation.ps1` - PowerShell wrapper for validation (Windows)
+  - `run-url-validation.ps1` - PowerShell wrapper for URL validation (Windows)
 
 ## 📋 File Format
 
