@@ -18,16 +18,16 @@ Each `file_*.cfg` follows this structure:
 
 ```ini
 [link_0]
-url=https://store.steampowered.com/app/1234567/GameName/
-developer=DeveloperName
-dev_link=https://developer-website.com
-preview_image=https://example.com/image.jpg
+url="https://store.steampowered.com/app/1234567/GameName/"
+developer="DeveloperName"
+dev_link="https://developer-website.com"
+preview_image="https://example.com/image.jpg"
 
 [link_1]
-url=https://example.itch.io/game
-developer=AnotherDev
-dev_link=https://another-dev.com
-preview_image=https://example.com/another-image.png
+url="https://example.itch.io/game"
+developer="AnotherDev"
+dev_link="https://another-dev.com"
+preview_image="https://example.com/another-image.png"
 ```
 
 ### Field Requirements
@@ -45,6 +45,7 @@ preview_image=https://example.com/another-image.png
 4. No empty lines or extra fields allowed
 5. Field format must be: `fieldname="value"` (values must be wrapped in double quotes)
 6. `preview_image` must have aspect ratio of **460:215** (approximately 16:9)
+7. Field format must be: `fieldname="value"` (values wrapped in double quotes, no spaces around `=`)
 
 ## 🚀 Adding New Games
 

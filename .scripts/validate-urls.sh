@@ -202,10 +202,10 @@ validate_urls_in_file() {
             in_section { print }
         ' "$file")
         
-        # Extract URLs
-        local url=$(echo "$section_content" | grep '^url=' | cut -d'=' -f2-)
-        local dev_link=$(echo "$section_content" | grep '^dev_link=' | cut -d'=' -f2-)
-        local preview_image=$(echo "$section_content" | grep '^preview_image=' | cut -d'=' -f2-)
+        # Extract URLs (strip quotes from values)
+        local url=$(echo "$section_content" | grep '^url=' | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/')
+        local dev_link=$(echo "$section_content" | grep '^dev_link=' | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/')
+        local preview_image=$(echo "$section_content" | grep '^preview_image=' | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/')
         
         # Check each URL
         if [ ! -z "$url" ]; then
