@@ -43,7 +43,8 @@ preview_image=https://example.com/another-image.png
 2. Links must be numbered sequentially starting from 0
 3. Each link section must have exactly 4 fields (url, developer, dev_link, preview_image)
 4. No empty lines or extra fields allowed
-5. Field format must be: `fieldname=value` (no spaces around `=`)
+5. Field format must be: `fieldname="value"` (values must be wrapped in double quotes)
+6. `preview_image` must have aspect ratio of **460:215** (approximately 16:9)
 
 ## 🚀 Adding New Games
 
@@ -65,6 +66,7 @@ The repository includes automated validation to ensure data quality which will r
 **What it checks:**
 - All URLs return HTTP 200 OK
 - `preview_image` URLs return actual image content types (image/jpeg, image/png, etc.)
+- `preview_image` dimensions match aspect ratio of 460:215 (±10% tolerance)
 - All links are accessible
 
 ## 🤖 Automated Workflow
@@ -72,7 +74,7 @@ The repository includes automated validation to ensure data quality which will r
 Pull requests automatically trigger validation via GitHub Actions:
 
 1. ✅ Format validation of changed `.cfg` files
-2. ✅ URL validation (HTTP 200 + image content type checks)
+2. ✅ URL validation (HTTP 200 + image content type + aspect ratio checks)
 3. ✅ Auto-updates `_index.cfg` with current file/game counts
 4. ✅ Auto-commits index changes if needed
 
@@ -118,6 +120,11 @@ _Widget repository link will be added here_
 **Image validation fails with "not an image"**
 - The preview_image URL doesn't return an image content type
 - Make sure you're linking directly to an image file, not a webpage
+
+**Image validation fails with "wrong aspect ratio"**
+- The preview_image dimensions don't match 460:215 aspect ratio
+- Resize your image to approximately 460x215 pixels (or any resolution with 16:9 aspect ratio)
+- The validation allows ±10% tolerance for the aspect ratio
 
 **"_index.cfg has been manually modified"**
 - Revert changes to `_index.cfg` - this file is auto-generated
