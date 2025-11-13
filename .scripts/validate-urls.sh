@@ -104,8 +104,64 @@ check_image_url() {
     
     # Check if content type starts with "image/"
     if [[ "$content_type" =~ ^image/ ]]; then
-        echo -e "${GREEN}✓ OK (200, $content_type)${NC}" >&2
-        return 0
+        # Download image to temporary file to check dimensions
+        local temp_file=$(mktemp)
+        if curl -L -s --max-time 30 -o "$temp_file" "$url" 2>/dev/null; then
+            # Check if ImageMagick identify is available
+            if command -v identify >/dev/null 2>&1; then
+                # Get image dimensions using ImageMagick
+                local dimensions=$(identify -format "%wx%h" "$temp_file" 2>/dev/null || echo "")
+                if [ ! -z "$dimensions" ]; then
+                    local width=$(echo "$dimensions" | cut -d'x' -f1)
+                    local height=$(echo "$dimensions" | cut -d'x' -f2)
+                    
+                    # Debug: Print dimensions
+                    echo -e "${BLUE}    📏 Image dimensions: ${width}x${height}${NC}" >&2
+                    
+                    # Calculate aspect ratio (width/height)
+                    local aspect_ratio=$(echo "scale=4; $width / $height" | bc 2>/dev/null || echo "0")
+                    
+                    # Debug: Print calculated aspect ratio
+                    echo -e "${BLUE}    📐 Aspect ratio: ${aspect_ratio}:1 (target: ~2.1395:1)${NC}" >&2
+                    
+                    # Target aspect ratio: 460/215 ≈ 2.1395
+                    local target_ratio="2.1395"
+                    
+                    # Check if aspect ratio is within tolerance (±0.1)
+                    local ratio_diff=$(echo "scale=4; ($aspect_ratio - $target_ratio)^2" | bc 2>/dev/null || echo "1")
+                    local tolerance="0.1"
+                    
+                    if (( $(echo "$ratio_diff < $tolerance^2" | bc -l 2>/dev/null || echo "0") )); then
+                        echo -e "${GREEN}✓ OK (200, $content_type, ${width}x${height})${NC}" >&2
+                        rm -f "$temp_file"
+                        return 0
+                    else
+                        echo -e "${RED}✗ FAILED (wrong aspect ratio: ${width}x${height} = ${aspect_ratio}:1, expected ~${target_ratio}:1)${NC}" >&2
+                        echo -e "${RED}ERROR in $file [$section]: $field_name has wrong aspect ratio (expected 460:215)${NC}" >&2
+                        echo -e "${RED}URL: $url${NC}" >&2
+                        rm -f "$temp_file"
+                        return 1
+                    fi
+                else
+                    echo -e "${YELLOW}⚠ WARNING: Could not determine image dimensions (identify command failed)${NC}" >&2
+                    echo -e "${GREEN}✓ OK (200, $content_type, dimensions unknown)${NC}" >&2
+                    rm -f "$temp_file"
+                    return 0
+                fi
+            else
+                echo -e "${YELLOW}⚠ WARNING: ImageMagick not available, skipping dimension check${NC}" >&2
+                echo -e "${YELLOW}    💡 Install ImageMagick to enable aspect ratio validation${NC}" >&2
+                echo -e "${GREEN}✓ OK (200, $content_type)${NC}" >&2
+                rm -f "$temp_file"
+                return 0
+            fi
+        else
+            echo -e "${RED}✗ FAILED (could not download image)${NC}" >&2
+            echo -e "${RED}ERROR in $file [$section]: Could not download $field_name${NC}" >&2
+            echo -e "${RED}URL: $url${NC}" >&2
+            rm -f "$temp_file"
+            return 1
+        fi
     else
         echo -e "${RED}✗ FAILED (not an image, Content-Type: $content_type)${NC}" >&2
         echo -e "${RED}ERROR in $file [$section]: $field_name is not an image (Content-Type: $content_type)${NC}" >&2

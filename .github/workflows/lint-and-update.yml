@@ -34,6 +34,9 @@ jobs:
       - name: Make URL validation script executable
         run: chmod +x .scripts/validate-urls.sh
       
+      - name: Install ImageMagick for image dimension checking
+        run: sudo apt-get update && sudo apt-get install -y imagemagick bc
+      
       - name: Run URL validation on changed files
         run: ./.scripts/validate-urls.sh
       
