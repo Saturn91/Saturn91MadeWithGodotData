@@ -2,6 +2,9 @@
 
 This repository serves as a data source for a Godot widget that randomly promotes games made with Godot. The data is stored in structured `.cfg` files that contain game information including URLs, developer details, and preview images.
 
+The corresponding Godot Widget which will use this data is: https://github.com/Saturn91/saturn-91-made-with-godot-widget
+You can officially get it as a godot addon: https://godotengine.org/asset-library/asset/4485
+
 ## 📁 Repository Structure
 
 - `file_*.cfg` - Data files containing game information (up to 100 games per file)
@@ -49,16 +52,10 @@ preview_image="https://example.com/another-image.png"
 
 ## 🚀 Adding New Games
 
-### Option 1: Manual Addition
-
 1. Fork this repository
 2. Edit an existing `file_*.cfg` or create a new one if existing files have 100 games
 3. Add your game entry following the format above
 4. Create a pull request
-
-### Option 2: Using the Widget
-
-_The Godot widget will be linked here once available_
 
 ## ✅ Validation
 
